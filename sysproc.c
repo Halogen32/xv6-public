@@ -89,3 +89,39 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// TODO
+int
+sys_setttickets(void) {
+
+	
+
+}
+
+// TODO
+int
+sys_getpinfo(void) {
+
+}
+
+// TODO
+int
+sys_yield(void) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

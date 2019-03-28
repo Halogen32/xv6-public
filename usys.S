@@ -29,3 +29,8 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+
+// ADDED
+SYSCALL(settickets)
+SYSCALL(getpinfo)
+SYSCALL(yield)
