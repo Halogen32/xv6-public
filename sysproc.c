@@ -7,6 +7,9 @@
 #include "mmu.h"
 #include "proc.h"
 
+// ADDED
+#include "pstat.h"
+
 int
 sys_fork(void)
 {
@@ -93,59 +96,74 @@ sys_uptime(void)
 // set the number of tickets in the calling process
 int
 sys_settickets(void) {
+
   const int MAX_TICKETS = 100000;
   const int MIN_TICKETS = 1;
-  const int DEFAULT_TICKETS = 10;
+  // const int DEFAULT_TICKETS = 10;
   
-  int *number;
-  int code = argint(0, number); // acquire argument
+  // TODO: DO I NEED A CRITICAL SECTION HERE
   
-	if (code < 0) // the method failed to acquire desired tickets
-	  return -1; // fail
+  int *tickets;
+  int code = argint(0, tickets); // acquire ticket argument
+  struct proc* p = myproc(); // get the current calling process
+  
+	if (code < 0) // the method failed to acquire ticket argument
+		return -1; // fail
 	  
-	if (*number < MIN_TICKETS || *number > MAX_TICKETS) // the method is requesting to set unreasonable tickets
+	if (*tickets < MIN_TICKETS || *tickets > MAX_TICKETS) // the method is requesting to set unreasonable tickets
 	  return -1; // fail
 	
-	// TODO: SET TICKETS FOR THE CALLING PROCESS
+	p->tickets = *tickets; // sets the number of tickets this process has
 	
   return 0; // success
+  
 }
 
 // get information about all running processes
 int
 sys_getpinfo(void) {
+
+	// TODO: CAN'T ACCESS PTABLE FROM HERE; CAN'T DEREFERENCE TO TYPE PROCTABLE
   
-  struct pstat *ps;
-  struct proc *p;
+  struct proctable *pt = getptable(); // gets ptable from proc.c
+  struct pstat *ps; // container for all kinds of running process information defined in pstat.h
+  struct proc *p; // a reference to a process
   
   int code = argptr(0, (void*)&ps, sizeof(struct pstat)); // acquire argument
   
-  if (code < 0) // failed to process argument
-    return -1; // fail
+  if (code < 0) return -1; // method failed to acquire argument
+  if (ps == 0) return -1; // can't work with null values
   
-  acquire(&ptable.lock); // lock ptable
+  acquire(&pt->lock); // lock ptable
+  ps->num_process = 0;
   
-  ps->num_processes = 0;
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { // scan all created processes
+  int i = 0; // index integer
+  for (p = pt->proc; p < &pt->proc[NPROC]; p++) { // scan all created processes
     
-    ps->num_processes++;
-    ps->pid[p % NPROC] = p; // assign pid within pid range
+    if (p->state != UNUSED) {
+    	ps->num_process++; // non-UNUSED processes increase
     
-    // TODO: FIGURE OUT HOW TO ASSIGN PROCESS ID
-    // TODO: HOW TO RECORD TICKETS
-    
+		  ps->pid[i] = p->pid; // assign pid within pid range
+		  ps->tickets[i] = p->tickets; // capture tickets within range
+		  ps->ticks[i] = p->ticks; // capture ticks used by process
+		  
+		  i = (i + 1) % NPROC; // next proc index
+    }
   }
-  release(&ptable.lock); // unlock ptable
+  
+  release(&pt->lock); // unlock ptable
   
   return 0; // success  
+  
 }
 
 // calls the real implementation of yield and return success
 int
 sys_yield(void) {
 
-  yield(); // calls the real implementation
+  yield(); // calls the real implementation from defs.h and defined in proc.c
   return 0; // always succeed
+  
 }
 
 

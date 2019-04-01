@@ -7,10 +7,10 @@
 #include "proc.h"
 #include "spinlock.h"
 
-struct {
+struct proctable {
   struct spinlock lock;
   struct proc proc[NPROC];
-} ptable;
+} ptable; // EDIT: EXTERN
 
 static struct proc *initproc;
 
@@ -199,6 +199,11 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  
+  // ADDED
+  np->tickets = curproc->tickets; // clone tickets to new process
+  np->ticks = 0; // process hasn't run for any ticks yet
+  
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -531,4 +536,12 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+// ADDED
+
+// get the process table of this program
+struct proctable*
+getptable(void) {
+	return &ptable;
 }

@@ -51,7 +51,8 @@ struct proc {
   char name[16];               // Process name (debugging)
 
 	// ADDED
-  int ticks_used;				      // tracks how many ticks the process used
+  int ticks;			             // tracks how many ticks the process used
+  int tickets;                 // how many tickets this process has
 };
 
 // Process memory is laid out contiguously, low addresses first:
