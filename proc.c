@@ -9,6 +9,8 @@
 
 // ADDED
 #include "proctable.h"
+#include "random.h"
+
 /*
 struct proctable {
   struct spinlock lock;
@@ -144,6 +146,11 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+  
+  // ADDED
+  p->tickets = DEFAULT_TICKETS;
+  p->ticks = 0;
+  // END ADDED
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -207,8 +214,8 @@ fork(void)
   *np->tf = *curproc->tf;
   
   // ADDED
-  np->tickets = curproc->tickets; // clone tickets to new process
-  np->ticks = 0; // process hasn't run for any ticks yet
+  np->tickets = curproc->tickets; // clone tickets
+  np->ticks = curproc->ticks; // clone ticks
   
 
   // Clear %eax so that fork returns 0 in the child.
@@ -322,6 +329,23 @@ wait(void)
   }
 }
 
+int playLottery(struct proc* p) { // ADDED
+  const int WINNING_VALUE = 0;
+  const int MAX = MAX_TICKETS;
+  int ticket_value;
+  
+  for (int i = 0; i < p->tickets; i++) { // check process for winning tickets
+    
+    ticket_value = rand() % (MAX + 1);
+  
+    if (ticket_value == WINNING_VALUE) { // a winning ticket has value 0 
+      return 1; // process is winner
+    }
+  }
+  
+  return 0; // process did not win
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -337,6 +361,10 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
+  double seed = 0.0; // value of seed to use
+  int winner = -1; // is the process holding a winning ticket
+  srand(seed);
+  
   for(;;){
     // Enable interrupts on this processor.
     sti();
@@ -346,6 +374,14 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+      
+      //ADDED
+      
+      // winner -> 1 = true; 0 = false
+      
+      winner = playLottery(p); // 0 if winner; 1 otherwise
+      if (winner) continue; // the process didn't win; try next process
+      // END ADDED
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -378,7 +414,9 @@ sched(void)
 {
   int intena;
   struct proc *p = myproc();
-
+  
+   // p->ticks = ticks; // ADDED
+  
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
   if(mycpu()->ncli != 1)
@@ -429,6 +467,8 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
+  
+  p->ticks = ticks; // ADDED: GET TICKS BEFORE SLEEPING
   
   if(p == 0)
     panic("sleep");

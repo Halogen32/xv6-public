@@ -55,6 +55,10 @@ struct proc {
   int tickets;                 // how many tickets this process has
 };
 
+#define MAX_TICKETS 100000
+#define MIN_TICKETS 1
+#define DEFAULT_TICKETS 10
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss

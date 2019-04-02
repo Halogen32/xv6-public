@@ -75,7 +75,7 @@ sys_sleep(void)
     if(myproc()->killed){
       release(&tickslock);
       return -1;
-    }
+    }    
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
@@ -98,24 +98,36 @@ sys_uptime(void)
 // set the number of tickets in the calling process
 int
 sys_settickets(void) {
-
-  const int MAX_TICKETS = 100000;
-  const int MIN_TICKETS = 1;
+  // cprintf("entered ticket setter\n");
+  
+  //const int MAX_TICKETS = 100000;
+  //const int MIN_TICKETS = 1;
   // const int DEFAULT_TICKETS = 10;
   
   // TODO: DO I NEED A CRITICAL SECTION HERE
   
-  int *tickets = 0;
-  int code = argint(0, tickets); // acquire ticket argument
-  struct proc* p = myproc(); // get the current calling process
+  // cprintf("init local variables\n");
+  
+  int tickets = 0;
+  int code = argint(0, &tickets); // acquire ticket argument
+  struct proc *p = myproc(); // get the current calling process
+  
+	// cprintf("tickets to set: %d\n", tickets);
+  // cprintf("PASSED!\n");
   
 	if (code < 0) // the method failed to acquire ticket argument
 		return -1; // fail
-	  
-	if (*tickets < MIN_TICKETS || *tickets > MAX_TICKETS) // the method is requesting to set unreasonable tickets
-	  return -1; // fail
+		
+	// cprintf("passed code check\n");
 	
-	p->tickets = *tickets; // sets the number of tickets this process has
+	if (tickets < MIN_TICKETS || tickets > MAX_TICKETS) // the method is requesting to set unreasonable tickets
+	{
+	  return -1; // fail
+	}
+	
+	// cprintf("passed ticket range test\n");
+	
+	p->tickets = tickets; // sets the number of tickets this process has
 	
   return 0; // success
   
@@ -124,8 +136,6 @@ sys_settickets(void) {
 // get information about all running processes
 int
 sys_getpinfo(void) {
-
-	// TODO: CAN'T ACCESS PTABLE FROM HERE; CAN'T DEREFERENCE TO TYPE PROCTABLE
   
   struct proctable *pt = getptable(); // gets ptable from proc.c
   struct pstat *ps; // container for all kinds of running process information defined in pstat.h
@@ -142,9 +152,11 @@ sys_getpinfo(void) {
   int i = 0; // index integer
   for (p = pt->proc; p < &pt->proc[NPROC]; p++) { // scan all created processes
     
+    
     if (p->state != UNUSED) {
     	ps->num_processes++; // non-UNUSED processes increase
     
+      cprintf("process %d, queued %d\n", p->pid, ps->num_processes);
 		  ps->pid[i] = p->pid; // assign pid within pid range
 		  ps->tickets[i] = p->tickets; // capture tickets within range
 		  ps->ticks[i] = p->ticks; // capture ticks used by process
