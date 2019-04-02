@@ -9,6 +9,8 @@
 
 // ADDED
 #include "pstat.h"
+#include "spinlock.h" // used by proctable.h
+#include "proctable.h"
 
 int
 sys_fork(void)
@@ -103,7 +105,7 @@ sys_settickets(void) {
   
   // TODO: DO I NEED A CRITICAL SECTION HERE
   
-  int *tickets;
+  int *tickets = 0;
   int code = argint(0, tickets); // acquire ticket argument
   struct proc* p = myproc(); // get the current calling process
   
@@ -135,13 +137,13 @@ sys_getpinfo(void) {
   if (ps == 0) return -1; // can't work with null values
   
   acquire(&pt->lock); // lock ptable
-  ps->num_process = 0;
+  ps->num_processes = 0;
   
   int i = 0; // index integer
   for (p = pt->proc; p < &pt->proc[NPROC]; p++) { // scan all created processes
     
     if (p->state != UNUSED) {
-    	ps->num_process++; // non-UNUSED processes increase
+    	ps->num_processes++; // non-UNUSED processes increase
     
 		  ps->pid[i] = p->pid; // assign pid within pid range
 		  ps->tickets[i] = p->tickets; // capture tickets within range

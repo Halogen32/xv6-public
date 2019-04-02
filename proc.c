@@ -7,10 +7,16 @@
 #include "proc.h"
 #include "spinlock.h"
 
+// ADDED
+#include "proctable.h"
+/*
 struct proctable {
   struct spinlock lock;
   struct proc proc[NPROC];
-} ptable; // EDIT: EXTERN
+} ptable;
+*/
+
+struct proctable ptable; // defined in proctable.h
 
 static struct proc *initproc;
 
