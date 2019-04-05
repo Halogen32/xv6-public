@@ -214,8 +214,9 @@ fork(void)
   *np->tf = *curproc->tf;
   
   // ADDED
-  np->tickets = curproc->tickets; // clone tickets
-  np->ticks = curproc->ticks; // clone ticks
+  np->tickets = curproc->tickets; // clone tickets  
+  np->ticks = 0; // process hasn't run yet
+  // END ADDED
   
 
   // Clear %eax so that fork returns 0 in the child.
@@ -329,17 +330,18 @@ wait(void)
   }
 }
 
+// ITERATE OVER A PROCESSES TICKETS TO FIND A WINNING VALUE
 int playLottery(struct proc* p) { // ADDED
   const int WINNING_VALUE = 0;
   const int MAX = MAX_TICKETS;
-  int ticket_value;
+  int ticket_value = -1;
   
   for (int i = 0; i < p->tickets; i++) { // check process for winning tickets
     
     ticket_value = rand() % (MAX + 1);
   
     if (ticket_value == WINNING_VALUE) { // a winning ticket has value 0 
-      return 1; // process is winner
+      return 1; // process is winner, no need to go further
     }
   }
   
@@ -361,9 +363,11 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
+  // ADDED
   double seed = 0.0; // value of seed to use
   int winner = -1; // is the process holding a winning ticket
-  srand(seed);
+  srand(seed); // sets seed value of rand()
+  // END ADDED
   
   for(;;){
     // Enable interrupts on this processor.
@@ -375,12 +379,9 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
       
-      //ADDED
-      
-      // winner -> 1 = true; 0 = false
-      
-      winner = playLottery(p); // 0 if winner; 1 otherwise
-      if (winner) continue; // the process didn't win; try next process
+      //ADDED      
+      winner = playLottery(p); // 1 if winner; 0 otherwise
+      if (!winner) continue; // !1 = 0, does not continue; !0 = 1, continues
       // END ADDED
 
       // Switch to chosen process.  It is the process's job
@@ -415,7 +416,7 @@ sched(void)
   int intena;
   struct proc *p = myproc();
   
-   // p->ticks = ticks; // ADDED
+  p->ticks++; // ADDED: increment local ticks
   
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
@@ -467,8 +468,6 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  
-  p->ticks = ticks; // ADDED: GET TICKS BEFORE SLEEPING
   
   if(p == 0)
     panic("sleep");

@@ -67,7 +67,7 @@ void wait_for_ticket_counts(int num_children, int *pids, int *tickets) {
 
 int main(int argc, char *argv[])
 {
-    printf(1, "entering main...\n");
+    //printf(1, "entering main...\n");
     
     if (argc < 3) {
         printf(2, "usage: %s seconds tickets1 tickets2 ... ticketsN\n"
@@ -77,33 +77,33 @@ int main(int argc, char *argv[])
         exit();
     }
     
-    printf(1, "passed argument test...\n");
+    //printf(1, "passed argument test...\n");
     
     int tickets_for[MAX_CHILDREN];
     int active_pids[MAX_CHILDREN];
     int num_seconds = atoi(argv[1]);
     int num_children = argc - 2;
     
-    printf(1, "passed int init...\n");
+    //printf(1, "passed int init...\n");
     
-    printf(1, "testing if num children exceeds max allowed children...\n");
+    //printf(1, "testing if num children exceeds max allowed children...\n");
     if (num_children > MAX_CHILDREN) {
         printf(2, "only up to %d supported\n", MAX_CHILDREN);
         exit();
     }
-    printf(1, "testing clear!\n");
+    //printf(1, "testing clear!\n");
 
-    printf(1, "testing ticket setter...\n");
+    //printf(1, "testing ticket setter...\n");
     /* give us a lot of ticket so we don't get starved */
     settickets(LARGE_TICKET_COUNT);
     for (int i = 0; i < num_children; ++i) {
-        printf(1, "CYCLE: %d\n", i);
+        //printf(1, "CYCLE: %d\n", i);
     
         int tickets = atoi(argv[i + 2]);
         tickets_for[i] = tickets;
         active_pids[i] = spawn(tickets);
     }
-    printf(1, "PASSED!\n");
+    //printf(1, "PASSED!\n");
     
     wait_for_ticket_counts(num_children, active_pids, tickets_for);
     struct pstat before ={};

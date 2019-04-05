@@ -104,8 +104,6 @@ sys_settickets(void) {
   //const int MIN_TICKETS = 1;
   // const int DEFAULT_TICKETS = 10;
   
-  // TODO: DO I NEED A CRITICAL SECTION HERE
-  
   // cprintf("init local variables\n");
   
   int tickets = 0;
@@ -156,15 +154,16 @@ sys_getpinfo(void) {
     if (p->state != UNUSED) {
     	ps->num_processes++; // non-UNUSED processes increase
     
-      cprintf("process %d, queued %d\n", p->pid, ps->num_processes);
+      // cprintf("process %d, queued %d\n", p->pid, ps->num_processes);
 		  ps->pid[i] = p->pid; // assign pid within pid range
 		  ps->tickets[i] = p->tickets; // capture tickets within range
 		  ps->ticks[i] = p->ticks; // capture ticks used by process
 		  
 		  i = (i + 1) % NPROC; // next proc index
     }
+    
   }
-  
+    
   release(&pt->lock); // unlock ptable
   
   return 0; // success  
